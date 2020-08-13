@@ -1,0 +1,16 @@
+
+plugins { id 'java-library' }
+
+project.version = '1.0'
+
+dependencies {
+    compile 'lyrth.makanism:Makanism.api'
+
+    extern 'org.apache.xmlgraphics:batik-transcoder:1.13'
+    extern 'org.apache.xmlgraphics:batik-codec:1.13'       // Batik dependency bug, so we manually add this in
+    extern 'org.jsoup:jsoup:1.12.2'
+}
+
+services {
+    provides 'lyrth.makanism.api.GuildModule' with 'makanism.module.reactordocs.ReactorDocs'
+}

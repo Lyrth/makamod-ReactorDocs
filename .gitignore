@@ -1,0 +1,15 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+.gradle/**
+!*.gradle
+
+# Ignore build output
+build
+build/**
+*/target/**
+*.class
+*.jar
+
+# Exclude log files
+*.log
+hs_err_pid*
