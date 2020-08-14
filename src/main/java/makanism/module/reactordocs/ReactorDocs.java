@@ -2,11 +2,11 @@ package makanism.module.reactordocs;
 
 import lyrth.makanism.api.GuildModule;
 import lyrth.makanism.api.annotation.GuildModuleInfo;
+import makanism.module.reactordocs.commands.Embed;
 import makanism.module.reactordocs.commands.ReactorDoc;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.JPEGTranscoder;
 import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
@@ -15,13 +15,17 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @GuildModuleInfo(
     commands = {
-        ReactorDoc.class
+        ReactorDoc.class,
+        Embed.class,
     }
 )
 public class ReactorDocs extends GuildModule<DocsConfig> {
