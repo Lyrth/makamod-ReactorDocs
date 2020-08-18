@@ -8,6 +8,7 @@ import lyrth.makanism.api.object.CommandCtx;
 import makanism.module.reactordocs.ReactorDocs;
 import makanism.module.reactordocs.defs.MethodDef;
 import org.jsoup.Jsoup;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.stream.Collectors;
@@ -47,6 +48,10 @@ public class ReactorDoc extends GuildModuleCommand<ReactorDocs> {
                     .collect(Collectors.joining());
                 if (!links.isBlank())
                     embed.addField("Images: ", links, false);
-            }));
+            })
+                .then(Flux.fromIterable(def.images()).next())
+            )
+            .flatMap(svg -> module.getImage(ctx, svg))
+            .flatMap(ctx::sendReply);
     }
 }

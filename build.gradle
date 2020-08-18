@@ -9,6 +9,14 @@ dependencies {
     extern 'org.apache.xmlgraphics:batik-transcoder:1.13'
     extern 'org.apache.xmlgraphics:batik-codec:1.13'       // Batik dependency bug, so we manually add this in
     extern 'org.jsoup:jsoup:1.12.2'
+
+    extern 'org.apache.xerces:xercesImpl:2.11.0'
+}
+
+repositories {
+    maven {
+        url 'https://maven.repository.redhat.com/earlyaccess/all/'
+    }
 }
 
 services {
