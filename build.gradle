@@ -10,7 +10,8 @@ dependencies {
     extern 'org.apache.xmlgraphics:batik-codec:1.13'       // Batik dependency bug, so we manually add this in
     extern 'org.jsoup:jsoup:1.12.2'
 
-    extern 'org.apache.xerces:xercesImpl:2.11.0'
+    //extern 'org.apache.xerces:xercesImpl:2.11.0'
+    extern 'org.apache.xmlgraphics:batik-rasterizer:1.13'
 }
 
 repositories {
