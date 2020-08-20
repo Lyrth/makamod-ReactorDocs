@@ -14,6 +14,8 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.PNGTranscoder;
 import org.jsoup.Jsoup;
+import org.jsoup.helper.W3CDom;
+import org.jsoup.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
@@ -38,6 +40,8 @@ public class ReactorDocs extends GuildModule<DocsConfig> {
     private static final Logger log = LoggerFactory.getLogger(ReactorDocs.class);
 
     private final PNGTranscoder transcoder = new PNGTranscoder();
+
+    //private final SVGUniverse universe = new SVGUniverse();
 
     public static void main(String[] args) throws IOException, TranscoderException {
         log.info("Hi.");
@@ -71,7 +75,8 @@ public class ReactorDocs extends GuildModule<DocsConfig> {
 
     public ReactorDocs(){
         transcoder.addTranscodingHint(PNGTranscoder.KEY_BACKGROUND_COLOR, Color.WHITE);
-        //System.setProperty("javax.xml.parsers.SAXParserFactory", SAXParserFactoryImpl.class.getName());
+        //System.setProperty("javax.xml.parsers.SAXParserFactory", "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl");
+        //transcoder.transcode();
     }
 
     @Override
@@ -106,6 +111,14 @@ public class ReactorDocs extends GuildModule<DocsConfig> {
     public Mono<String> getImage(CommandCtx ctx, String svgUrl){
         Function<Mono<Tuple2<InputStream, PipedOutputStream>>, Mono<PipedOutputStream>> processor = self ->
             self.map(t -> t
+                    .mapT1(is -> {
+                        try {
+                            return new W3CDom().fromJsoup(Jsoup.parse(is,null,"", Parser.xmlParser()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return null;
+                        }
+                    })
                     .mapT1(TranscoderInput::new)
                     .mapT2(TranscoderOutput::new)
                 )
@@ -113,6 +126,12 @@ public class ReactorDocs extends GuildModule<DocsConfig> {
                 .then(self)
                 .map(Tuple2::getT2);
 
+        /*
+        Function<Mono<Tuple2<InputStream, PipedOutputStream>>, Mono<PipedOutputStream>> processor2 = self ->
+            self.map(t -> t
+                    .mapT1(is -> Jsoup.parse(is,null,"", Parser.xmlParser()))
+                )
+         */
         return getHttpClient().get()
             .uri(svgUrl)
             .responseContent()
@@ -120,11 +139,46 @@ public class ReactorDocs extends GuildModule<DocsConfig> {
             .asInputStream()
             .zipWith(Mono.fromCallable(PipedOutputStream::new))
             .transform(processor)
+
             .flatMap(o -> Mono.fromCallable(() -> new PipedInputStream(o)))
             .flatMap(i -> ctx.getClient().getChannelById(Snowflake.of(745140882029805571L)).ofType(MessageChannel.class)
                 .flatMap(c -> c.createMessage(spec -> spec.addFile("image", i))))
             .flatMapIterable(Message::getAttachments)
             .next()
             .map(Attachment::getUrl);
+
+
+        /*
+        return getHttpClient().get()
+            .uri(svgUrl)
+            .responseContent()
+            .aggregate()
+            .asInputStream()
+            .flatMap(is -> Mono.fromCallable(() ->
+                universe.loadSVG(is, svgUrl.substring(svgUrl.lastIndexOf('/')+1), true)))
+            .map(universe::getDiagram)
+            .flatMap(d -> {
+                BufferedImage image = new BufferedImage((int)d.getWidth(), (int)d.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                Graphics2D gfx = image.createGraphics();
+                try {
+                    d.render(gfx);
+                } catch (Exception e) {
+                    return Mono.error(e);
+                }
+                PipedInputStream inputStream = new PipedInputStream();
+                try {
+                    PipedOutputStream out = new PipedOutputStream(inputStream);
+                    return Mono.fromCallable(() -> ImageIO.write(image, "PNG", out))
+                        .then(Mono.fromCallable(() -> {out.close(); return 0;}))
+                        .thenReturn(inputStream);
+                } catch (Exception e) {
+                    return Mono.error(e);
+                }
+            })
+            .flatMap(i -> ctx.getClient().getChannelById(Snowflake.of(745140882029805571L)).ofType(MessageChannel.class)
+                .flatMap(c -> c.createMessage(spec -> spec.addFile("image", i))))
+            .flatMapIterable(Message::getAttachments)
+            .next()
+            .map(Attachment::getUrl);*/
     }
 }
